@@ -196,6 +196,18 @@ const Register = props => {
           pad={{ horizontal: "xxsmall" }}
         ></Box>
         <Form onSubmit={handleSubmit}>
+          <FormField label="Email" error={emailErr}>
+            <TextInput
+              type="text"
+              required={true}
+              placeholder="enter your company email"
+              value={email}
+              onChange={event => {
+                emailValidation(event.target.value);
+                setEmail(event.target.value);
+              }}
+            />
+          </FormField>
           <FormField label="Name" error={nameErr}>
             <TextInput
               required={true}
@@ -215,18 +227,6 @@ const Register = props => {
               onChange={event => {
                 companyValidation(event.target.value);
                 setCompany(event.target.value);
-              }}
-            />
-          </FormField>
-          <FormField label="Email" error={emailErr}>
-            <TextInput
-              type="text"
-              required={true}
-              placeholder="enter your company email"
-              value={email}
-              onChange={event => {
-                emailValidation(event.target.value);
-                setEmail(event.target.value);
               }}
             />
           </FormField>
