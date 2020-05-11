@@ -7,33 +7,60 @@ import {
   Heading,
   Header,
   Paragraph,
-  RadioButton,
-  Text
+  Text,
+  CheckBox
 } from "grommet";
 import { Close, StatusInfo } from "grommet-icons";
 
 const ListItem = props => {
   const [open, setOpen] = useState();
+  const [checked, setChecked] = React.useState(false);
   const onOpen = () => setOpen(true);
   let disabled = false;
+  const [controlCheck, setControlCheck] = useState(`checked={
+    props.registeredWorkshopList
+      ? props.registeredWorkshopList.includes(props.workshopNameDesc.name)
+      : checked
+  }`);
 
   const onClose = () => setOpen(undefined);
 
+  const toggle = () => {
+    setControlCheck(`checked = { checked }`);
+    console.log("toggle controlCheck", controlCheck);
+  };
+
   if (props.workshopNameDesc.capacity <= 0) disabled = true;
 
+  console.log("controlCheck", controlCheck);
   return (
     <Box direction="row" align="center" gap="small">
-      <RadioButton
+      <CheckBox
         name={props.workshopNameDesc.name}
         label={props.workshopNameDesc.name}
-        checked={props.workshopNameDesc.name === props.workshop}
-        disabled={disabled}
+        {...controlCheck}
+        disabled={
+          props.registeredWorkshopList &&
+          props.registeredWorkshopList.includes(props.workshopNameDesc.name)
+            ? false
+            : disabled
+        }
         onChange={event => {
-          props.setWorkshop(props.workshopNameDesc.name);
+          // if (!props.registeredWorkshopList) setChecked(event.target.checked);
+          // setControlCheck(`checked = { checked }`);
+          toggle();
+          setChecked(event.target.checked);
+          props.setWorkshopList([
+            ...props.workshopList,
+            props.workshopNameDesc.name
+          ]);
+          // setWorkshopNameDesc([...workshopNameDesc, ...arr]);
           props.setWorkshopErr("");
         }}
       />
-      <Button icon={<StatusInfo />} onClick={onOpen} />
+      {props.workshopNameDesc.description && (
+        <Button icon={<StatusInfo />} onClick={onOpen} />
+      )}
       {disabled && (
         <Text color="status-critical"> Currently unavailable. Try later</Text>
       )}

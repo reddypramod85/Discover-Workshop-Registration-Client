@@ -5,6 +5,8 @@ import {
   AppHeader,
   Register,
   Success,
+  Cancel,
+  Modify,
   Hpedev,
   AppFooter
 } from "../../components";
@@ -30,6 +32,16 @@ function App() {
               exact
               path="/success"
               render={props => <Success {...props} />}
+            />
+            <Route
+              exact
+              path="/cancel"
+              render={props => <Cancel {...props} />}
+            />
+            <Route
+              exact
+              path="/modify"
+              render={props => <Modify {...props} />}
             />
           </Switch>
         </Router>

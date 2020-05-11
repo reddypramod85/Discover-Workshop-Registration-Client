@@ -8,16 +8,18 @@ import {
   Button,
   Heading,
   Header,
-  Text
+  Text,
+  // CheckBox,
+  List
 } from "grommet";
 import axios from "axios";
 import { ListItem } from "../../components";
 
 const Register = props => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [company, setCompany] = useState("");
-  const [workshop, setWorkshop] = useState("");
+  const [name, setName] = useState(props.setName);
+  const [email, setEmail] = useState(props.setEmail);
+  const [company, setCompany] = useState(props.setCompany);
+  const [workshopList, setWorkshopList] = useState([]);
   const [nameErr, setNameErr] = useState("");
   const [emailErr, setEmailErr] = useState("");
   const [companyErr, setCompanyErr] = useState("");
@@ -25,11 +27,21 @@ const Register = props => {
   const [error, setError] = useState("");
   const [submitStatus, setSubmitStatus] = useState(false);
   const [workshopNameDesc, setWorkshopNameDesc] = useState([]);
-
+  const [profileState, setProfileState] = useState(props);
+  //SetRegisteredWorkshopList(props.registeredWorkshopList);
   const apiEndpoint = process.env.REACT_APP_API_ENDPOINT;
   const getWorkshopsApi = `${apiEndpoint}/api/workshops`;
-  const addCustomer = `${apiEndpoint}/api/customer/create`;
-
+  let addCustomer;
+  {
+    props.showInstructions
+      ? (addCustomer = `${apiEndpoint}/api/customer/edit/${props.setcustID}`)
+      : (addCustomer = `${apiEndpoint}/api/customer/create`);
+  }
+  let method;
+  {
+    props.showInstructions ? (method = "PUT") : (method = "POST");
+  }
+  console.log("addCustomer", addCustomer);
   let formIsValid = false;
 
   useEffect(() => {
@@ -109,9 +121,9 @@ const Register = props => {
       setEmailErr("Please enter your company email");
     }
   };
-  const workshopValidation = async workshop => {
+  const workshopValidation = async workshopList => {
     //Notebooks List - required
-    if (workshop) {
+    if (workshopList && workshopList.length > 0) {
       formIsValid = true;
       setWorkshopErr("");
     } else {
@@ -122,7 +134,7 @@ const Register = props => {
 
   const handleValidation = async () => {
     //Workshop - required
-    await workshopValidation(workshop);
+    await workshopValidation(workshopList);
   };
 
   const handleSubmit = async e => {
@@ -130,13 +142,13 @@ const Register = props => {
     await handleValidation();
     if (formIsValid) {
       axios({
-        method: "POST",
+        method: method,
         url: addCustomer,
         data: {
           name,
           email,
           company,
-          workshop
+          workshopList
         }
       })
         .then(response => {
@@ -144,7 +156,13 @@ const Register = props => {
           if (response.status >= 400) {
             return setSubmitStatus(false);
           } else if (response.status > 200) {
-            setError(response.data);
+            if (
+              response.data.message ===
+              "You have already registered, please click on update to make changes!"
+            ) {
+              // setWorkshopNameDesc([...workshopNameDesc, ...arr]);
+            }
+            setError(response.data.message);
             return setSubmitStatus(false);
           }
           setSubmitStatus(true);
@@ -188,7 +206,7 @@ const Register = props => {
           pad={{ horizontal: "xxsmall" }}
         >
           <Heading level={3} margin="none">
-            Register for a Workshop
+            {props.setTitle ? props.setTitle : "Register for Workshops"}
           </Heading>
         </Header>
         <Box
@@ -197,22 +215,37 @@ const Register = props => {
         ></Box>
         <Form onSubmit={handleSubmit}>
           <FormField label="Email" error={emailErr}>
-            <TextInput
-              type="text"
-              required={true}
-              placeholder="enter your company email"
-              value={email}
-              onChange={event => {
-                emailValidation(event.target.value);
-                setEmail(event.target.value);
-              }}
-            />
+            {props.setEmail ? (
+              <Text
+                margin={{
+                  vertical: "xsmall",
+                  horizontal: "xsmall",
+                  top: "",
+                  bottom: "...",
+                  left: "...",
+                  right: "..."
+                }}
+              >
+                {props.setEmail}
+              </Text>
+            ) : (
+              <TextInput
+                type="text"
+                required={true}
+                placeholder="enter your company email"
+                value={email}
+                onChange={event => {
+                  emailValidation(event.target.value);
+                  setEmail(event.target.value);
+                }}
+              />
+            )}
           </FormField>
           <FormField label="Name" error={nameErr}>
             <TextInput
               required={true}
               placeholder="enter your name"
-              value={name}
+              value={props.setName ? props.setName : name}
               onChange={event => {
                 nameValidation(event.target.value);
                 setName(event.target.value);
@@ -223,13 +256,40 @@ const Register = props => {
             <TextInput
               required={true}
               placeholder="enter your company name"
-              value={company}
+              value={props.setCompany ? props.setCompany : company}
               onChange={event => {
                 companyValidation(event.target.value);
                 setCompany(event.target.value);
               }}
             />
           </FormField>
+          {props.showInstructions && (
+            <Box gap="medium" border pad="small">
+              {/* <CheckBox
+                checked
+                label="Your Registered Workshops are checked"
+              ></CheckBox>
+              <CheckBox label="Your UnRegistered Workshops are UnChecked"></CheckBox> */}
+              <List
+                secondaryKey="name"
+                border={false}
+                // secondaryKey="percent"
+                data={[
+                  {
+                    name: "* By default, registered workshops are autochecked"
+                  },
+                  {
+                    name:
+                      "* Please check/uncheck any available workshop to modify your registration"
+                  }
+                ]}
+              />
+              {/* <Text>
+                Please check/uncheck any available workshop to modify your
+                registration
+              </Text> */}
+            </Box>
+          )}
           <FormField label="Workshops" error={workshopErr}>
             <Box pad="xsmall" gap="xsmall">
               {workshopNameDesc &&
@@ -237,10 +297,15 @@ const Register = props => {
                 workshopNameDesc.map(workshopData => (
                   <ListItem
                     key={workshopData.name}
+                    registeredWorkshopList={
+                      profileState.regWkshpList
+                        ? profileState.regWkshpList[0]
+                        : profileState.regWkshpList
+                    }
                     workshopNameDesc={workshopData}
-                    setWorkshop={setWorkshop}
+                    setWorkshopList={setWorkshopList}
                     setWorkshopErr={setWorkshopErr}
-                    workshop={workshop}
+                    workshopList={workshopList}
                   />
                 ))}
             </Box>
@@ -264,7 +329,9 @@ const Register = props => {
             pad="small"
           >
             <Button
-              label="Register"
+              label={
+                props.showInstructions ? "Modify Registration" : "Register"
+              }
               type="submit"
               hoverIndicator={true}
               primary={true}
@@ -293,8 +360,8 @@ const Register = props => {
               name,
               email,
               company, //startDate, endDate,
-              //workshopList,
-              workshop
+              workshopList
+              // workshop
             }
           }}
         />
